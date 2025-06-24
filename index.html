@@ -551,12 +551,11 @@
             zoomControl: false
         });
 
-        // Light map theme with more detail
-        L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
-            attribution: '© Mapbox © OpenStreetMap',
-            tileSize: 512,
-            zoomOffset: -1,
-            maxZoom: 18
+        // Light map theme - using CartoDB Positron which doesn't require API key
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors © CARTO',
+            subdomains: 'abcd',
+            maxZoom: 19
         }).addTo(map);
 
         // Add zoom control with custom position
@@ -974,19 +973,6 @@
                             </div>
                         `;
                     }
-
-                    // Add walk to bus stop step
-                    html += `
-                        <div class="route-step">
-                            <div class="step-line"></div>
-                            <div class="step-icon walk">🚶</div>
-                            <div class="step-info">
-                                <div class="step-name">Walk to bus stop</div>
-                                <div class="step-detail">${locations[route.steps[0].from].name}</div>
-                                <div class="step-time">${walkTime} min walk</div>
-                            </div>
-                        </div>
-                    `;
 
                     route.steps.forEach((step, stepIndex) => {
                         const isLast = stepIndex === route.steps.length - 1;
