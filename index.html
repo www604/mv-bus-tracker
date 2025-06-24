@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>MV Transit</title>
@@ -22,16 +22,24 @@
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', sans-serif;
             background: #f2f2f7;
             color: #000;
-            height: 100vh;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
             width: 100vw;
+            margin: 0;
+            padding: 0;
             overflow: hidden;
             position: fixed;
             -webkit-text-size-adjust: 100%;
             -webkit-font-smoothing: antialiased;
         }
 
+        html {
+            height: -webkit-fill-available;
+        }
+
         .app-container {
             height: 100vh;
+            height: -webkit-fill-available; /* Safari fix for viewport height */
             width: 100vw;
             display: flex;
             flex-direction: column;
@@ -42,17 +50,22 @@
             flex: 1;
             width: 100%;
             z-index: 1;
+            position: relative;
+            height: 100%;
         }
 
         .top-bar {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            background: rgba(255, 255, 255, 0.92);
+            background: rgba(255, 255, 255, 0.97);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            padding: env(safe-area-inset-top) 12px 12px;
+            padding-top: env(safe-area-inset-top);
+            padding-left: 12px;
+            padding-right: 12px;
+            padding-bottom: 12px;
             z-index: 1000;
             box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
         }
@@ -207,8 +220,8 @@
         }
 
         .bottom-sheet {
-            position: absolute;
-            bottom: 0;
+            position: fixed;
+            bottom: env(safe-area-inset-bottom);
             left: 0;
             right: 0;
             background: #ffffff;
@@ -216,10 +229,9 @@
             transform: translateY(calc(100% - 60px));
             transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
             z-index: 1000;
-            height: 85vh;
+            max-height: calc(85vh - env(safe-area-inset-bottom));
             display: flex;
             flex-direction: column;
-            padding-bottom: env(safe-area-inset-bottom);
             box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.15);
             -webkit-transform: translateY(calc(100% - 60px));
             -webkit-transition: -webkit-transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
@@ -231,13 +243,13 @@
         }
 
         .bottom-sheet.active {
-            transform: translateY(35vh);
-            -webkit-transform: translateY(35vh);
+            transform: translateY(50%);
+            -webkit-transform: translateY(50%);
         }
 
         .bottom-sheet.expanded {
-            transform: translateY(10vh);
-            -webkit-transform: translateY(10vh);
+            transform: translateY(15%);
+            -webkit-transform: translateY(15%);
         }
 
         .sheet-header {
@@ -630,6 +642,23 @@
     </div>
 
     <script>
+        // Set proper viewport height accounting for Safari UI
+        function setViewportHeight() {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+            
+            // Account for Safari's bottom bar
+            const app = document.querySelector('.app-container');
+            if (app) {
+                app.style.height = `${window.innerHeight}px`;
+            }
+        }
+
+        // Call on load and resize
+        setViewportHeight();
+        window.addEventListener('resize', setViewportHeight);
+        window.addEventListener('orientationchange', setViewportHeight);
+
         // Initialize map with Safari optimizations
         const map = L.map('map', {
             center: [41.4, -70.6],
@@ -1303,17 +1332,21 @@
             sheet.classList.remove('minimized', 'expanded');
             sheet.classList.add('active');
             
-            // Adjust map to show route above sheet
+            // Adjust map to show route above sheet and Safari bottom bar
             setTimeout(() => {
                 if (fromPin && toPin) {
                     const bounds = L.latentBounds([
                         fromPin.getLatLng(),
                         toPin.getLatLng()
                     ]);
-                    // Adjust padding to account for bottom sheet
+                    
+                    // Calculate padding to avoid Safari UI
+                    const topPadding = document.querySelector('.top-bar').offsetHeight + 20;
+                    const bottomPadding = window.innerHeight * 0.5 + 100; // Extra padding for Safari bar
+                    
                     map.fitBounds(bounds, { 
-                        paddingTopLeft: [20, 20],
-                        paddingBottomRight: [20, window.innerHeight * 0.65]
+                        paddingTopLeft: [20, topPadding],
+                        paddingBottomRight: [20, bottomPadding]
                     });
                 }
             }, 350);
