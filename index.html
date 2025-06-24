@@ -81,6 +81,47 @@
             gap: 8px;
         }
 
+        .location-button {
+            background: #ffffff;
+            border: 0.5px solid rgba(0, 0, 0, 0.04);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            margin-bottom: 8px;
+        }
+
+        .location-button:active {
+            background: #f2f2f7;
+            transform: scale(0.98);
+        }
+
+        .location-button.active {
+            background: #007AFF;
+            color: white;
+        }
+
+        .location-button.active svg {
+            stroke: white;
+        }
+
+        .location-button svg {
+            width: 20px;
+            height: 20px;
+            stroke: #007AFF;
+            flex-shrink: 0;
+        }
+
+        .location-button span {
+            font-size: 17px;
+            font-weight: 500;
+            letter-spacing: -0.4px;
+        }
+
         .location-input {
             position: relative;
         }
@@ -284,7 +325,7 @@
         }
 
         .step-icon.walk {
-            background: #8e8e93;
+            background: #007AFF;
             font-size: 16px;
         }
 
@@ -445,6 +486,14 @@
             </div>
             
             <div class="search-container">
+                <button class="location-button" id="location-button" onclick="requestUserLocation()">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span id="location-text">Use Current Location</span>
+                </button>
+                
                 <div class="location-input">
                     <svg class="location-icon" fill="none" stroke="#FF3B30" stroke-width="2" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="3"></circle>
@@ -452,6 +501,7 @@
                     </svg>
                     <select id="from-select" class="location-select" onchange="onLocationChange('from')">
                         <option value="">From</option>
+                        <option value="current-location" style="display: none;">📍 Current Location</option>
                         <optgroup label="Vineyard Haven">
                             <option value="vh-ssa">Vineyard Haven SSA Terminal</option>
                             <option value="vh-downtown">Tisbury Downtown</option>
@@ -580,6 +630,26 @@
             className: 'custom-pin'
         });
 
+        const blueIcon = L.divIcon({
+            html: `<div style="position: relative; width: 30px; height: 30px;">
+                <div style="background: #007AFF; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+                <div style="background: rgba(0, 122, 255, 0.15); width: 30px; height: 30px; border-radius: 50%; position: absolute; top: 0; left: 0; animation: pulse 2s infinite;"></div>
+            </div>`,
+            iconSize: [30, 30],
+            iconAnchor: [15, 15],
+            className: 'user-location-pin'
+        });
+
+        // Add pulse animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0% { transform: scale(1); opacity: 1; }
+                100% { transform: scale(2); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
         // Location data
         const locations = {
             'vh-ssa': { name: 'Vineyard Haven SSA Terminal', coords: [41.4547, -70.6055], category: 'Vineyard Haven' },
@@ -701,12 +771,127 @@
         let fromPin = null;
         let toPin = null;
         let routeControl = null;
+        let userLocationMarker = null;
+        let userLocation = null;
+        let walkingRouteControl = null;
+
+        // Calculate distance between two points (Haversine formula)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 3959; // Radius of Earth in miles
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        // Find nearest bus stop to user location
+        function findNearestStop(userLat, userLng) {
+            let nearestStop = null;
+            let shortestDistance = Infinity;
+            
+            Object.entries(locations).forEach(([id, loc]) => {
+                const distance = calculateDistance(userLat, userLng, loc.coords[0], loc.coords[1]);
+                if (distance < shortestDistance) {
+                    shortestDistance = distance;
+                    nearestStop = { id, ...loc, distance };
+                }
+            });
+            
+            return nearestStop;
+        }
+
+        // Request user location
+        function requestUserLocation() {
+            const button = document.getElementById('location-button');
+            const buttonText = document.getElementById('location-text');
+            
+            if ("geolocation" in navigator) {
+                button.classList.add('active');
+                buttonText.textContent = 'Getting location...';
+                
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        userLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        
+                        // Add user location marker
+                        if (userLocationMarker) {
+                            map.removeLayer(userLocationMarker);
+                        }
+                        userLocationMarker = L.marker([userLocation.lat, userLocation.lng], {
+                            icon: blueIcon
+                        }).addTo(map);
+                        
+                        // Find nearest stop
+                        const nearestStop = findNearestStop(userLocation.lat, userLocation.lng);
+                        const walkTime = Math.ceil(nearestStop.distance / 0.05); // 3 mph = 0.05 miles/min
+                        
+                        // Update UI
+                        buttonText.textContent = `📍 ${walkTime} min walk to ${nearestStop.name}`;
+                        
+                        // Update from select
+                        const fromSelect = document.getElementById('from-select');
+                        const currentOption = fromSelect.querySelector('option[value="current-location"]');
+                        currentOption.style.display = 'block';
+                        currentOption.textContent = `📍 Current Location (${walkTime} min to ${nearestStop.name})`;
+                        fromSelect.value = 'current-location';
+                        
+                        // Store nearest stop info
+                        userLocation.nearestStop = nearestStop;
+                        userLocation.walkTime = walkTime;
+                        
+                        // Center map on user
+                        map.setView([userLocation.lat, userLocation.lng], 14);
+                    },
+                    (error) => {
+                        button.classList.remove('active');
+                        buttonText.textContent = 'Use Current Location';
+                        
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                alert("Location access denied. Please enable location services in your browser settings.");
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                alert("Location information unavailable. Please try again.");
+                                break;
+                            case error.TIMEOUT:
+                                alert("Location request timed out. Please try again.");
+                                break;
+                            default:
+                                alert("An error occurred getting your location.");
+                        }
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                alert("Your browser doesn't support geolocation.");
+            }
+        }
 
         function onLocationChange(type) {
             const select = document.getElementById(`${type}-select`);
             const locationId = select.value;
             
             if (!locationId) return;
+            
+            // Handle current location
+            if (locationId === 'current-location' && type === 'from') {
+                if (!userLocation) {
+                    requestUserLocation();
+                    return;
+                }
+                // Don't add a separate pin for current location as we already have the blue dot
+                return;
+            }
             
             const location = locations[locationId];
             
@@ -728,15 +913,19 @@
                 toPin = pin;
             }
             
-            // Fit map to show both pins if both are set
-            if (fromPin && toPin) {
-                const bounds = L.latentBounds([
-                    fromPin.getLatLng(),
-                    toPin.getLatLng()
-                ]);
+            // Fit map to show relevant pins
+            const bounds = [];
+            if (userLocation && select.value === 'current-location') {
+                bounds.push([userLocation.lat, userLocation.lng]);
+            }
+            if (fromPin) bounds.push(fromPin.getLatLng());
+            if (toPin) bounds.push(toPin.getLatLng());
+            if (userLocationMarker) bounds.push(userLocationMarker.getLatLng());
+            
+            if (bounds.length > 1) {
                 map.fitBounds(bounds, { padding: [120, 60] });
-            } else {
-                map.setView(location.coords, 13);
+            } else if (bounds.length === 1) {
+                map.setView(bounds[0], 13);
             }
         }
 
@@ -782,18 +971,53 @@
                 return;
             }
 
-            // Remove existing route
+            // Remove existing routes
             if (routeControl) {
                 map.removeControl(routeControl);
             }
+            if (walkingRouteControl) {
+                map.removeControl(walkingRouteControl);
+            }
 
-            const possibleRoutes = findPossibleRoutes(fromId, toId);
+            // Handle current location as starting point
+            let actualFromId = fromId;
+            let includeWalking = false;
+            
+            if (fromId === 'current-location' && userLocation) {
+                actualFromId = userLocation.nearestStop.id;
+                includeWalking = true;
+            }
+
+            const possibleRoutes = findPossibleRoutes(actualFromId, toId, includeWalking);
             showRouteResults(possibleRoutes);
 
-            // Draw route on map with street routing
+            // Draw routes on map
             if (possibleRoutes.length > 0 && possibleRoutes[0].steps) {
+                if (includeWalking && userLocation) {
+                    drawWalkingRoute(userLocation, locations[actualFromId].coords);
+                }
                 drawStreetRoute(possibleRoutes[0]);
             }
+        }
+
+        function drawWalkingRoute(from, to) {
+            walkingRouteControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(from.lat, from.lng),
+                    L.latLng(to[0], to[1])
+                ],
+                routeWhileDragging: false,
+                addWaypoints: false,
+                createMarker: function() { return null; },
+                lineOptions: {
+                    styles: [{
+                        color: '#007AFF',
+                        weight: 4,
+                        opacity: 0.6,
+                        dashArray: '5, 10'
+                    }]
+                }
+            }).addTo(map);
         }
 
         function drawStreetRoute(route) {
@@ -940,8 +1164,6 @@
                 let html = '<div class="free-badge">FREE BUS SERVICE</div>';
                 
                 routes.forEach((route, index) => {
-                    const walkTime = 3; // minutes to walk to bus stop
-                    
                     html += `
                         <div class="route-card">
                             <div class="route-header">
@@ -969,6 +1191,21 @@
                             html += `<div class="bus-time ${bus.isNext ? 'next' : ''} ${bus.isMissed ? 'missed' : ''}">${bus.time}</div>`;
                         });
                         html += `
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    // Add walking step if from current location
+                    if (route.includeWalking && userLocation) {
+                        html += `
+                            <div class="route-step">
+                                <div class="step-line"></div>
+                                <div class="step-icon walk">🚶</div>
+                                <div class="step-info">
+                                    <div class="step-name">Walk to ${userLocation.nearestStop.name}</div>
+                                    <div class="step-detail">${(userLocation.nearestStop.distance).toFixed(2)} miles</div>
+                                    <div class="step-time">${route.walkTime} min walk</div>
                                 </div>
                             </div>
                         `;
