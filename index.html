@@ -19,7 +19,7 @@
 
         html, body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', sans-serif;
-            background: #000;
+            background: #f2f2f7;
             color: #000;
             height: 100%;
             width: 100%;
@@ -1011,24 +1011,60 @@
             // Add to pin
             toPin = L.marker(locations[currentRoute.to].coords, { icon: greenIcon }).addTo(map);
 
-            // Draw route
-            routeControl = L.Routing.control({
-                waypoints: waypoints,
-                routeWhileDragging: false,
-                addWaypoints: false,
-                createMarker: function() { return null; },
-                lineOptions: {
-                    styles: [{
-                        color: '#007AFF',
-                        weight: 5,
-                        opacity: 0.8
-                    }]
+            // Draw route line on map
+            const routeColor = route.steps[0].color || '#007AFF';
+            
+            // If walking is included, draw walking route first
+            if (currentRoute.includeWalking && userLocation) {
+                L.polyline([
+                    [userLocation.lat, userLocation.lng],
+                    fromCoords
+                ], {
+                    color: '#007AFF',
+                    weight: 4,
+                    opacity: 0.6,
+                    dashArray: '5, 10'
+                }).addTo(map);
+            }
+
+            // Draw bus route
+            const busWaypoints = [];
+            busWaypoints.push(fromCoords);
+            
+            route.steps.forEach(step => {
+                const fromLoc = locations[step.from].coords;
+                const toLoc = locations[step.to].coords;
+                
+                // Get all intermediate stops for this route segment
+                const routeData = routes[step.route];
+                if (routeData) {
+                    const fromIndex = routeData.stops.indexOf(step.from);
+                    const toIndex = routeData.stops.indexOf(step.to);
+                    
+                    for (let i = fromIndex; i <= toIndex; i++) {
+                        if (locations[routeData.stops[i]]) {
+                            busWaypoints.push(locations[routeData.stops[i]].coords);
+                        }
+                    }
+                } else {
+                    busWaypoints.push(toLoc);
                 }
+            });
+
+            // Draw the bus route line
+            L.polyline(busWaypoints, {
+                color: routeColor,
+                weight: 5,
+                opacity: 0.8
             }).addTo(map);
 
             // Fit bounds with extra padding for UI
             setTimeout(() => {
-                const bounds = L.latentBounds(waypoints);
+                const allPoints = currentRoute.includeWalking && userLocation ? 
+                    [[userLocation.lat, userLocation.lng], ...busWaypoints] : 
+                    busWaypoints;
+                    
+                const bounds = L.latentBounds(allPoints);
                 map.fitBounds(bounds, { 
                     paddingTopLeft: [20, 120],
                     paddingBottomRight: [20, 280]
@@ -1042,7 +1078,6 @@
             let html = '';
             
             html += `
-                <div class="free-badge">FREE BUS SERVICE</div>
                 <div class="route-overview">
                     <div class="route-type">
                         ${route.type === 'direct' ? 'Direct Route' : 'Transfer Required'}
