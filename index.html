@@ -18,9 +18,13 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        html {
+            height: -webkit-fill-available;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', sans-serif;
-            background: #f2f2f7;
+            background: #000;
             color: #000;
             min-height: 100vh;
             min-height: -webkit-fill-available;
@@ -33,81 +37,66 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        html {
-            height: -webkit-fill-available;
-        }
-
-        .app-container {
+        /* Main Search View */
+        .search-view {
             height: 100vh;
-            height: -webkit-fill-available; /* Safari fix for viewport height */
+            height: -webkit-fill-available;
             width: 100vw;
             display: flex;
             flex-direction: column;
-            position: relative;
-        }
-
-        #map {
-            flex: 1;
-            width: 100%;
-            z-index: 1;
-            position: relative;
-            height: 100%;
-        }
-
-        .top-bar {
-            position: fixed;
+            background: #f2f2f7;
+            position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            background: rgba(255, 255, 255, 0.97);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            z-index: 10;
+            transition: transform 0.3s ease;
+        }
+
+        .search-view.hidden {
+            transform: translateX(-100%);
+        }
+
+        .search-header {
+            background: #fff;
             padding-top: env(safe-area-inset-top);
-            padding-left: 12px;
-            padding-right: 12px;
-            padding-bottom: 12px;
-            z-index: 1000;
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-bottom: 16px;
             box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
         }
 
-        .header-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-
         .app-title {
-            font-size: 17px;
-            font-weight: 600;
+            font-size: 34px;
+            font-weight: 700;
             letter-spacing: -0.4px;
+            margin-bottom: 20px;
+            margin-top: 12px;
         }
 
         .current-time {
-            font-size: 15px;
-            color: #3a3a3c;
+            font-size: 17px;
+            color: #8e8e93;
             font-weight: 400;
-            font-variant-numeric: tabular-nums;
+            float: right;
+            margin-top: 12px;
         }
 
         .search-container {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 12px;
         }
 
         .location-button {
             background: #ffffff;
-            border: 0.5px solid rgba(0, 0, 0, 0.04);
-            border-radius: 10px;
-            padding: 12px;
+            border: 1px solid #e5e5ea;
+            border-radius: 12px;
+            padding: 16px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-            margin-bottom: 8px;
         }
 
         .location-button:active {
@@ -118,6 +107,7 @@
         .location-button.active {
             background: #007AFF;
             color: white;
+            border-color: #007AFF;
         }
 
         .location-button.active svg {
@@ -125,8 +115,8 @@
         }
 
         .location-button svg {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             stroke: #007AFF;
             flex-shrink: 0;
         }
@@ -143,10 +133,10 @@
 
         .location-select {
             width: 100%;
-            padding: 11px 16px 11px 36px;
+            padding: 16px 16px 16px 44px;
             background: #ffffff;
-            border: 0.5px solid rgba(0, 0, 0, 0.04);
-            border-radius: 10px;
+            border: 1px solid #e5e5ea;
+            border-radius: 12px;
             color: #000;
             font-size: 17px;
             outline: none;
@@ -154,12 +144,10 @@
             appearance: none;
             -webkit-appearance: none;
             cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
         }
 
         .location-select:focus {
             border-color: #007AFF;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         }
 
         .location-select option {
@@ -180,32 +168,31 @@
 
         .location-icon {
             position: absolute;
-            left: 12px;
+            left: 16px;
             top: 50%;
             transform: translateY(-50%);
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             pointer-events: none;
         }
 
         .route-btn {
             background: #007AFF;
             border: none;
-            padding: 14px;
-            border-radius: 10px;
+            padding: 16px;
+            border-radius: 12px;
             color: #fff;
             font-size: 17px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            margin-top: 8px;
+            margin-top: 20px;
             width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
             letter-spacing: -0.4px;
-            box-shadow: 0 2px 4px rgba(0, 122, 255, 0.15);
         }
 
         .route-btn:active {
@@ -216,73 +203,112 @@
         .route-btn:disabled {
             background: #c7c7cc;
             cursor: not-allowed;
-            box-shadow: none;
         }
 
-        .bottom-sheet {
-            position: fixed;
+        /* Route View */
+        .route-view {
+            height: 100vh;
+            height: -webkit-fill-available;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 5;
+            background: #000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .route-view.active {
+            transform: translateX(0);
+        }
+
+        #map {
+            flex: 1;
+            width: 100%;
+            z-index: 1;
+        }
+
+        .route-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding-top: env(safe-area-inset-top);
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .route-header-content {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            gap: 12px;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            color: #007AFF;
+            font-size: 17px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .back-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .route-summary {
+            flex: 1;
+            text-align: center;
+        }
+
+        .route-summary-title {
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: -0.4px;
+        }
+
+        .route-summary-subtitle {
+            font-size: 13px;
+            color: #8e8e93;
+            margin-top: 2px;
+        }
+
+        .route-details {
+            position: absolute;
             bottom: env(safe-area-inset-bottom);
             left: 0;
             right: 0;
             background: #ffffff;
-            border-radius: 12px 12px 0 0;
-            transform: translateY(calc(100% - 60px));
-            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-            z-index: 1000;
-            max-height: calc(85vh - env(safe-area-inset-bottom));
-            display: flex;
-            flex-direction: column;
+            border-radius: 16px 16px 0 0;
             box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.15);
-            -webkit-transform: translateY(calc(100% - 60px));
-            -webkit-transition: -webkit-transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            z-index: 1000;
+            max-height: 40vh;
+            transition: transform 0.3s ease;
         }
 
-        .bottom-sheet.minimized {
-            transform: translateY(calc(100% - 60px));
-            -webkit-transform: translateY(calc(100% - 60px));
-        }
-
-        .bottom-sheet.active {
-            transform: translateY(50%);
-            -webkit-transform: translateY(50%);
-        }
-
-        .bottom-sheet.expanded {
-            transform: translateY(15%);
-            -webkit-transform: translateY(15%);
-        }
-
-        .sheet-header {
-            padding: 8px 20px 16px;
+        .route-details-header {
+            padding: 16px;
             border-bottom: 1px solid #e5e5ea;
-            background: #f9f9f9;
-            border-radius: 12px 12px 0 0;
             cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
         }
 
-        .sheet-handle {
-            width: 36px;
-            height: 5px;
-            background: #c7c7cc;
-            border-radius: 2.5px;
-            margin: 0 auto 8px;
-        }
-
-        .sheet-title {
-            font-size: 15px;
-            font-weight: 600;
-            color: #8e8e93;
-            text-align: center;
-            letter-spacing: -0.2px;
-        }
-
-        .sheet-content {
-            padding: 0 16px 16px;
+        .route-details-content {
+            padding: 16px;
             overflow-y: auto;
-            flex: 1;
+            max-height: 30vh;
             -webkit-overflow-scrolling: touch;
-            overscroll-behavior: contain;
         }
 
         .route-card {
@@ -292,61 +318,34 @@
             margin-bottom: 12px;
         }
 
-        .route-header {
+        .bus-time-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 16px;
-        }
-
-        .route-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #000;
-            letter-spacing: -0.4px;
-        }
-
-        .route-subtitle {
-            font-size: 15px;
-            color: #8e8e93;
-            margin-top: 2px;
-        }
-
-        .route-time {
-            text-align: right;
+            align-items: center;
+            margin-bottom: 12px;
         }
 
         .next-bus {
+            font-size: 24px;
+            font-weight: 700;
             color: #007AFF;
-            font-size: 20px;
-            font-weight: 600;
-            letter-spacing: -0.4px;
         }
 
         .duration {
+            font-size: 15px;
             color: #8e8e93;
-            font-size: 13px;
-            margin-top: 2px;
         }
 
         .route-step {
             display: flex;
-            align-items: flex-start;
-            margin-bottom: 16px;
-            position: relative;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e5ea;
         }
 
-        .step-line {
-            position: absolute;
-            left: 18px;
-            top: 36px;
-            width: 2px;
-            height: calc(100% + 16px);
-            background: #c7c7cc;
-        }
-
-        .route-step:last-child .step-line {
-            display: none;
+        .route-step:last-child {
+            border-bottom: none;
         }
 
         .step-icon {
@@ -360,131 +359,52 @@
             font-weight: 700;
             font-size: 14px;
             flex-shrink: 0;
-            z-index: 1;
             color: white;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .step-icon.walk {
+            background: #8e8e93;
+            font-size: 16px;
         }
 
         .step-icon.transfer {
             background: #FF9500;
         }
 
-        .step-icon.walk {
-            background: #007AFF;
-            font-size: 16px;
-        }
-
-        .step-icon.destination {
-            background: #34C759;
-        }
-
         .step-info {
-            margin-left: 12px;
             flex: 1;
         }
 
         .step-name {
             font-size: 17px;
             font-weight: 600;
-            margin-bottom: 2px;
             letter-spacing: -0.4px;
         }
 
         .step-detail {
+            font-size: 15px;
             color: #8e8e93;
-            font-size: 15px;
-        }
-
-        .step-time {
-            color: #007AFF;
-            font-size: 15px;
-            margin-top: 4px;
-            font-weight: 500;
-        }
-
-        .free-badge {
-            background: #34C759;
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            text-align: center;
-            margin: 12px 0;
-            letter-spacing: -0.2px;
-        }
-
-        .schedule-info {
-            background: #ffffff;
-            border: 1px solid #e5e5ea;
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 16px;
-        }
-
-        .schedule-info h4 {
-            color: #000;
-            margin-bottom: 8px;
-            font-size: 15px;
-            font-weight: 600;
+            margin-top: 2px;
         }
 
         .bus-times {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
-            margin-top: 8px;
+            margin-top: 12px;
         }
 
         .bus-time {
-            background: #f2f2f7;
+            background: #e5e5ea;
             padding: 6px 12px;
             border-radius: 8px;
             font-size: 15px;
             font-weight: 500;
-            font-variant-numeric: tabular-nums;
         }
 
         .bus-time.next {
             background: #007AFF;
             color: white;
-            font-weight: 600;
-        }
-
-        .bus-time.missed {
-            opacity: 0.4;
-            text-decoration: line-through;
-        }
-
-        .no-route {
-            text-align: center;
-            color: #8e8e93;
-            padding: 40px 20px;
-            font-size: 17px;
-            line-height: 1.4;
-        }
-
-        .route-line-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: #007AFF;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 700;
-            margin-left: 8px;
-        }
-
-        .transit-icon {
-            width: 16px;
-            height: 16px;
-        }
-
-        /* Hide Leaflet routing container */
-        .leaflet-routing-container {
-            display: none !important;
         }
 
         /* Custom map controls */
@@ -503,32 +423,25 @@
             line-height: 36px !important;
         }
 
-        .leaflet-control-zoom a:first-child {
-            border-radius: 8px 8px 0 0 !important;
-            border-bottom: 0.5px solid rgba(0, 0, 0, 0.1) !important;
+        .leaflet-routing-container {
+            display: none !important;
         }
 
-        .leaflet-control-zoom a:last-child {
-            border-radius: 0 0 8px 8px !important;
-        }
-
-        @media (min-width: 768px) {
-            .app-container {
-                max-width: 768px;
-                margin: 0 auto;
-            }
+        /* Animations */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <div id="map"></div>
-        
-        <div class="top-bar">
-            <div class="header-row">
-                <h1 class="app-title">Transit Directions</h1>
+    <!-- Search View -->
+    <div class="search-view" id="search-view">
+        <div class="search-header">
+            <h1 class="app-title">
+                Transit
                 <span class="current-time" id="current-time"></span>
-            </div>
+            </h1>
             
             <div class="search-container">
                 <button class="location-button" id="location-button" onclick="requestUserLocation()">
@@ -544,7 +457,7 @@
                         <circle cx="12" cy="12" r="3"></circle>
                         <path d="M12 2a10 10 0 00-10 10c0 5.25 10 13 10 13s10-7.75 10-13a10 10 0 00-10-10z"></path>
                     </svg>
-                    <select id="from-select" class="location-select" onchange="onLocationChange('from')">
+                    <select id="from-select" class="location-select">
                         <option value="">From</option>
                         <option value="current-location" style="display: none;">📍 Current Location</option>
                         <optgroup label="Vineyard Haven">
@@ -586,7 +499,7 @@
                         <circle cx="12" cy="12" r="3"></circle>
                         <path d="M12 2a10 10 0 00-10 10c0 5.25 10 13 10 13s10-7.75 10-13a10 10 0 00-10-10z"></path>
                     </svg>
-                    <select id="to-select" class="location-select" onchange="onLocationChange('to')">
+                    <select id="to-select" class="location-select">
                         <option value="">To</option>
                         <optgroup label="Vineyard Haven">
                             <option value="vh-ssa">Vineyard Haven SSA Terminal</option>
@@ -622,72 +535,133 @@
                     </select>
                 </div>
                 
-                <button class="route-btn" onclick="findRoute()">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <button class="route-btn" onclick="showRoute()">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
                     </svg>
                     Route
                 </button>
             </div>
         </div>
+    </div>
 
-        <div class="bottom-sheet minimized" id="bottom-sheet">
-            <div class="sheet-header" onclick="toggleSheet()">
-                <div class="sheet-handle"></div>
-                <div class="sheet-title" id="sheet-title">Tap to plan your route</div>
+    <!-- Route View -->
+    <div class="route-view" id="route-view">
+        <div id="map"></div>
+        
+        <div class="route-header">
+            <div class="route-header-content">
+                <button class="back-btn" onclick="backToSearch()">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    Search
+                </button>
+                <div class="route-summary">
+                    <div class="route-summary-title" id="route-title">Route</div>
+                    <div class="route-summary-subtitle" id="route-subtitle"></div>
+                </div>
+                <div style="width: 80px;"></div>
             </div>
-            <div class="sheet-content" id="sheet-content">
+        </div>
+        
+        <div class="route-details">
+            <div class="route-details-header" onclick="toggleDetails()">
+                <div id="route-details-summary"></div>
+            </div>
+            <div class="route-details-content" id="route-details-content">
             </div>
         </div>
     </div>
 
     <script>
-        // Set proper viewport height accounting for Safari UI
-        function setViewportHeight() {
-            const vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        // Global variables
+        let map = null;
+        let fromPin = null;
+        let toPin = null;
+        let routeControl = null;
+        let walkingRouteControl = null;
+        let userLocationMarker = null;
+        let userLocation = null;
+        let currentRoute = null;
+
+        // Initialize time display
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+            document.getElementById('current-time').textContent = `${displayHours}:${minutes} ${ampm}`;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Location data
+        const locations = {
+            'vh-ssa': { name: 'Vineyard Haven SSA Terminal', coords: [41.4547, -70.6055] },
+            'vh-downtown': { name: 'Tisbury Downtown', coords: [41.4561, -70.6089] },
+            'vh-parkride': { name: 'Tisbury Park & Ride', coords: [41.4534, -70.6001] },
+            'ob-ssa': { name: 'Oak Bluffs SSA Terminal', coords: [41.4575, -70.5567] },
+            'ob-ocean': { name: 'Ocean Park', coords: [41.4521, -70.5594] },
+            'ob-downtown': { name: 'Oak Bluffs Downtown', coords: [41.4541, -70.5578] },
+            'edg-church': { name: 'Church Street, Edgartown', coords: [41.3891, -70.5128] },
+            'edg-downtown': { name: 'Downtown Edgartown', coords: [41.3889, -70.5153] },
+            'edg-southbeach': { name: 'South Beach', coords: [41.3541, -70.5203] },
+            'wt-townhall': { name: 'West Tisbury Town Hall', coords: [41.3792, -70.6731] },
+            'wt-grange': { name: 'Grange Hall', coords: [41.3756, -70.6753] },
+            'wt-business': { name: 'West Tisbury Business District', coords: [41.3806, -70.6714] },
+            'ch-center': { name: 'Chilmark Community Center', coords: [41.3478, -70.7419] },
+            'ch-menemsha': { name: 'Menemsha Beach', coords: [41.3461, -70.7678] },
+            'aq-cliffs': { name: 'Gay Head Lighthouse', coords: [41.3486, -70.8347] },
+            'airport': { name: 'Martha\'s Vineyard Airport', coords: [41.3931, -70.6143] },
+            'hospital': { name: 'Martha\'s Vineyard Hospital', coords: [41.4419, -70.5869] }
+        };
+
+        // Routes data
+        const routes = {
+            '1': { name: 'Edgartown - Vineyard Haven', stops: ['edg-church', 'edg-downtown', 'airport', 'ob-downtown', 'vh-downtown', 'vh-ssa'], color: '#007AFF', frequency: 20, firstBus: '6:30', lastBus: '23:10' },
+            '2': { name: 'West Tisbury - VH via Lambert\'s Cove', stops: ['wt-townhall', 'wt-business', 'vh-downtown', 'vh-ssa'], color: '#FF9500', frequency: 90, firstBus: '7:22', lastBus: '19:28' },
+            '3': { name: 'West Tisbury - VH via State Road', stops: ['wt-townhall', 'wt-business', 'vh-downtown', 'vh-ssa'], color: '#34C759', frequency: 60, firstBus: '6:07', lastBus: '21:07' },
+            '4': { name: 'West Tisbury - Chilmark - Menemsha', stops: ['wt-townhall', 'wt-business', 'ch-center', 'ch-menemsha'], color: '#FF3B30', frequency: 60, firstBus: '7:40', lastBus: '21:01' },
+            '5': { name: 'West Tisbury - Chilmark - Aquinnah', stops: ['wt-townhall', 'wt-grange', 'ch-center', 'aq-cliffs'], color: '#AF52DE', frequency: 60, firstBus: '6:38', lastBus: '23:10' },
+            '6': { name: 'Edgartown - Airport - West Tisbury', stops: ['edg-church', 'edg-downtown', 'airport', 'wt-grange', 'wt-townhall'], color: '#5AC8FA', frequency: 60, firstBus: '7:12', lastBus: '22:12' },
+            '7': { name: 'Oak Bluffs - Airport - Hospital', stops: ['ob-ocean', 'ob-downtown', 'hospital', 'airport'], color: '#5856D6', frequency: 60, firstBus: '6:55', lastBus: '18:55' },
+            '8': { name: 'South Beach', stops: ['edg-church', 'edg-downtown', 'edg-southbeach'], color: '#FFCC00', frequency: 30, firstBus: '6:45', lastBus: '20:09' },
+            '9': { name: 'Oak Bluffs - Hospital - Airport', stops: ['ob-ocean', 'ob-downtown', 'hospital', 'airport'], color: '#8E8E93', frequency: 60, firstBus: '7:00', lastBus: '23:00' },
+            '13': { name: 'Beach Road', stops: ['edg-church', 'edg-downtown', 'ob-ocean', 'ob-downtown', 'ob-ssa', 'vh-downtown', 'vh-ssa'], color: '#FF6482', frequency: 15, firstBus: '5:25', lastBus: '01:10' }
+        };
+
+        // Initialize map (only when route view is shown)
+        function initializeMap() {
+            if (map) return;
             
-            // Account for Safari's bottom bar
-            const app = document.querySelector('.app-container');
-            if (app) {
-                app.style.height = `${window.innerHeight}px`;
-            }
+            map = L.map('map', {
+                center: [41.4, -70.6],
+                zoom: 11,
+                zoomControl: false,
+                tap: false,
+                touchZoom: true,
+                dragging: true,
+                doubleClickZoom: true
+            });
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '© OpenStreetMap contributors © CARTO',
+                subdomains: 'abcd',
+                maxZoom: 19
+            }).addTo(map);
+
+            L.control.zoom({
+                position: 'bottomright'
+            }).addTo(map);
         }
 
-        // Call on load and resize
-        setViewportHeight();
-        window.addEventListener('resize', setViewportHeight);
-        window.addEventListener('orientationchange', setViewportHeight);
-
-        // Initialize map with Safari optimizations
-        const map = L.map('map', {
-            center: [41.4, -70.6],
-            zoom: 11,
-            zoomControl: false,
-            tap: false, // Fixes Safari touch issues
-            touchZoom: true,
-            dragging: true,
-            doubleClickZoom: true
-        });
-
-        // Light map theme - using CartoDB Positron which doesn't require API key
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap contributors © CARTO',
-            subdomains: 'abcd',
-            maxZoom: 19
-        }).addTo(map);
-
-        // Add zoom control with custom position
-        L.control.zoom({
-            position: 'bottomright'
-        }).addTo(map);
-
-        // Custom pin icons - Apple Maps style
+        // Custom icons
         const redIcon = L.divIcon({
             html: '<div style="background: #FF3B30; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>',
             iconSize: [30, 30],
             iconAnchor: [15, 15],
-            popupAnchor: [0, -15],
             className: 'custom-pin'
         });
 
@@ -695,7 +669,6 @@
             html: '<div style="background: #34C759; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>',
             iconSize: [30, 30],
             iconAnchor: [15, 15],
-            popupAnchor: [0, -15],
             className: 'custom-pin'
         });
 
@@ -709,144 +682,9 @@
             className: 'user-location-pin'
         });
 
-        // Add pulse animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes pulse {
-                0% { transform: scale(1); opacity: 1; }
-                100% { transform: scale(2); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-
-        // Location data
-        const locations = {
-            'vh-ssa': { name: 'Vineyard Haven SSA Terminal', coords: [41.4547, -70.6055], category: 'Vineyard Haven' },
-            'vh-downtown': { name: 'Tisbury Downtown', coords: [41.4561, -70.6089], category: 'Vineyard Haven' },
-            'vh-parkride': { name: 'Tisbury Park & Ride', coords: [41.4534, -70.6001], category: 'Vineyard Haven' },
-            'ob-ssa': { name: 'Oak Bluffs SSA Terminal', coords: [41.4575, -70.5567], category: 'Oak Bluffs' },
-            'ob-ocean': { name: 'Ocean Park', coords: [41.4521, -70.5594], category: 'Oak Bluffs' },
-            'ob-downtown': { name: 'Oak Bluffs Downtown', coords: [41.4541, -70.5578], category: 'Oak Bluffs' },
-            'edg-church': { name: 'Church Street, Edgartown', coords: [41.3891, -70.5128], category: 'Edgartown' },
-            'edg-downtown': { name: 'Downtown Edgartown', coords: [41.3889, -70.5153], category: 'Edgartown' },
-            'edg-southbeach': { name: 'South Beach', coords: [41.3541, -70.5203], category: 'Edgartown' },
-            'wt-townhall': { name: 'West Tisbury Town Hall', coords: [41.3792, -70.6731], category: 'West Tisbury' },
-            'wt-grange': { name: 'Grange Hall', coords: [41.3756, -70.6753], category: 'West Tisbury' },
-            'wt-business': { name: 'West Tisbury Business District', coords: [41.3806, -70.6714], category: 'West Tisbury' },
-            'ch-center': { name: 'Chilmark Community Center', coords: [41.3478, -70.7419], category: 'Chilmark' },
-            'ch-menemsha': { name: 'Menemsha Beach', coords: [41.3461, -70.7678], category: 'Chilmark' },
-            'aq-cliffs': { name: 'Gay Head Lighthouse', coords: [41.3486, -70.8347], category: 'Aquinnah' },
-            'airport': { name: 'Martha\'s Vineyard Airport', coords: [41.3931, -70.6143], category: 'Other' },
-            'hospital': { name: 'Martha\'s Vineyard Hospital', coords: [41.4419, -70.5869], category: 'Other' }
-        };
-
-        // Routes data with schedules
-        const routes = {
-            '1': {
-                name: 'Edgartown - Vineyard Haven',
-                stops: ['edg-church', 'edg-downtown', 'airport', 'ob-downtown', 'vh-downtown', 'vh-ssa'],
-                color: '#007AFF',
-                frequency: 20,
-                firstBus: '6:30',
-                lastBus: '23:10'
-            },
-            '2': {
-                name: 'West Tisbury - VH via Lambert\'s Cove',
-                stops: ['wt-townhall', 'wt-business', 'vh-downtown', 'vh-ssa'],
-                color: '#FF9500',
-                frequency: 90,
-                firstBus: '7:22',
-                lastBus: '19:28'
-            },
-            '3': {
-                name: 'West Tisbury - VH via State Road',
-                stops: ['wt-townhall', 'wt-business', 'vh-downtown', 'vh-ssa'],
-                color: '#34C759',
-                frequency: 60,
-                firstBus: '6:07',
-                lastBus: '21:07'
-            },
-            '4': {
-                name: 'West Tisbury - Chilmark - Menemsha',
-                stops: ['wt-townhall', 'wt-business', 'ch-center', 'ch-menemsha'],
-                color: '#FF3B30',
-                frequency: 60,
-                firstBus: '7:40',
-                lastBus: '21:01'
-            },
-            '5': {
-                name: 'West Tisbury - Chilmark - Aquinnah',
-                stops: ['wt-townhall', 'wt-grange', 'ch-center', 'aq-cliffs'],
-                color: '#AF52DE',
-                frequency: 60,
-                firstBus: '6:38',
-                lastBus: '23:10'
-            },
-            '6': {
-                name: 'Edgartown - Airport - West Tisbury',
-                stops: ['edg-church', 'edg-downtown', 'airport', 'wt-grange', 'wt-townhall'],
-                color: '#5AC8FA',
-                frequency: 60,
-                firstBus: '7:12',
-                lastBus: '22:12'
-            },
-            '7': {
-                name: 'Oak Bluffs - Airport - Hospital',
-                stops: ['ob-ocean', 'ob-downtown', 'hospital', 'airport'],
-                color: '#5856D6',
-                frequency: 60,
-                firstBus: '6:55',
-                lastBus: '18:55'
-            },
-            '8': {
-                name: 'South Beach',
-                stops: ['edg-church', 'edg-downtown', 'edg-southbeach'],
-                color: '#FFCC00',
-                frequency: 30,
-                firstBus: '6:45',
-                lastBus: '20:09'
-            },
-            '9': {
-                name: 'Oak Bluffs - Hospital - Airport',
-                stops: ['ob-ocean', 'ob-downtown', 'hospital', 'airport'],
-                color: '#8E8E93',
-                frequency: 60,
-                firstBus: '7:00',
-                lastBus: '23:00'
-            },
-            '13': {
-                name: 'Beach Road',
-                stops: ['edg-church', 'edg-downtown', 'ob-ocean', 'ob-downtown', 'ob-ssa', 'vh-downtown', 'vh-ssa'],
-                color: '#FF6482',
-                frequency: 15,
-                firstBus: '5:25',
-                lastBus: '01:10'
-            }
-        };
-
-        // Update time display
-        function updateTime() {
-            const now = new Date();
-            const hours = now.getHours();
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            const displayHours = hours % 12 || 12;
-            document.getElementById('current-time').textContent = `${displayHours}:${minutes} ${ampm}`;
-        }
-        updateTime();
-        setInterval(updateTime, 1000);
-
-        // Pins for selected locations
-        let fromPin = null;
-        let toPin = null;
-        let routeControl = null;
-        let userLocationMarker = null;
-        let userLocation = null;
-        let walkingRouteControl = null;
-
-        // Calculate distance between two points (Haversine formula)
+        // Calculate distance
         function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 3959; // Radius of Earth in miles
+            const R = 3959;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -856,7 +694,7 @@
             return R * c;
         }
 
-        // Find nearest bus stop to user location
+        // Find nearest stop
         function findNearestStop(userLat, userLng) {
             let nearestStop = null;
             let shortestDistance = Infinity;
@@ -888,52 +726,24 @@
                             lng: position.coords.longitude
                         };
                         
-                        // Add user location marker
-                        if (userLocationMarker) {
-                            map.removeLayer(userLocationMarker);
-                        }
-                        userLocationMarker = L.marker([userLocation.lat, userLocation.lng], {
-                            icon: blueIcon
-                        }).addTo(map);
-                        
-                        // Find nearest stop
                         const nearestStop = findNearestStop(userLocation.lat, userLocation.lng);
-                        const walkTime = Math.ceil(nearestStop.distance / 0.05); // 3 mph = 0.05 miles/min
+                        const walkTime = Math.ceil(nearestStop.distance / 0.05);
                         
-                        // Update UI
                         buttonText.textContent = `📍 ${walkTime} min walk to ${nearestStop.name}`;
                         
-                        // Update from select
                         const fromSelect = document.getElementById('from-select');
                         const currentOption = fromSelect.querySelector('option[value="current-location"]');
                         currentOption.style.display = 'block';
                         currentOption.textContent = `📍 Current Location (${walkTime} min to ${nearestStop.name})`;
                         fromSelect.value = 'current-location';
                         
-                        // Store nearest stop info
                         userLocation.nearestStop = nearestStop;
                         userLocation.walkTime = walkTime;
-                        
-                        // Center map on user
-                        map.setView([userLocation.lat, userLocation.lng], 14);
                     },
                     (error) => {
                         button.classList.remove('active');
                         buttonText.textContent = 'Use Current Location';
-                        
-                        switch(error.code) {
-                            case error.PERMISSION_DENIED:
-                                alert("Location access denied. Please enable location services in your browser settings.");
-                                break;
-                            case error.POSITION_UNAVAILABLE:
-                                alert("Location information unavailable. Please try again.");
-                                break;
-                            case error.TIMEOUT:
-                                alert("Location request timed out. Please try again.");
-                                break;
-                            default:
-                                alert("An error occurred getting your location.");
-                        }
+                        alert("Location access denied. Please enable location services.");
                     },
                     {
                         enableHighAccuracy: true,
@@ -946,61 +756,92 @@
             }
         }
 
-        function onLocationChange(type) {
-            const select = document.getElementById(`${type}-select`);
-            const locationId = select.value;
+        // Show route view
+        function showRoute() {
+            const fromId = document.getElementById('from-select').value;
+            const toId = document.getElementById('to-select').value;
             
-            if (!locationId) return;
-            
-            // Handle current location
-            if (locationId === 'current-location' && type === 'from') {
-                if (!userLocation) {
-                    requestUserLocation();
-                    return;
-                }
-                // Don't add a separate pin for current location as we already have the blue dot
+            if (!fromId || !toId) {
+                alert('Please select both starting point and destination');
                 return;
             }
-            
-            const location = locations[locationId];
-            
-            // Remove existing pin
-            if (type === 'from' && fromPin) {
-                map.removeLayer(fromPin);
-            } else if (type === 'to' && toPin) {
-                map.removeLayer(toPin);
+
+            if (fromId === toId) {
+                alert("You're already at your destination");
+                return;
             }
+
+            // Initialize map if needed
+            initializeMap();
+
+            // Switch views
+            document.getElementById('search-view').classList.add('hidden');
+            document.getElementById('route-view').classList.add('active');
+
+            // Calculate and display route
+            setTimeout(() => {
+                findAndDisplayRoute(fromId, toId);
+            }, 350);
+        }
+
+        // Back to search
+        function backToSearch() {
+            document.getElementById('route-view').classList.remove('active');
+            document.getElementById('search-view').classList.remove('hidden');
             
-            // Add new pin
-            const pin = L.marker(location.coords, {
-                icon: type === 'from' ? redIcon : greenIcon
-            }).addTo(map);
-            
-            if (type === 'from') {
-                fromPin = pin;
-            } else {
-                toPin = pin;
+            // Clear route
+            if (routeControl) {
+                map.removeControl(routeControl);
+                routeControl = null;
             }
-            
-            // Fit map to show relevant pins
-            const bounds = [];
-            if (userLocation && select.value === 'current-location') {
-                bounds.push([userLocation.lat, userLocation.lng]);
-            }
-            if (fromPin) bounds.push(fromPin.getLatLng());
-            if (toPin) bounds.push(toPin.getLatLng());
-            if (userLocationMarker) bounds.push(userLocationMarker.getLatLng());
-            
-            if (bounds.length > 1) {
-                map.fitBounds(bounds, { padding: [120, 60] });
-            } else if (bounds.length === 1) {
-                map.setView(bounds[0], 13);
+            if (walkingRouteControl) {
+                map.removeControl(walkingRouteControl);
+                walkingRouteControl = null;
             }
         }
 
-        function getNextBusTimes(route, fromStop, toStop) {
+        // Find and display route
+        function findAndDisplayRoute(fromId, toId) {
+            let actualFromId = fromId;
+            let includeWalking = false;
+            
+            if (fromId === 'current-location' && userLocation) {
+                actualFromId = userLocation.nearestStop.id;
+                includeWalking = true;
+                
+                // Add user location marker
+                if (userLocationMarker) map.removeLayer(userLocationMarker);
+                userLocationMarker = L.marker([userLocation.lat, userLocation.lng], { icon: blueIcon }).addTo(map);
+            }
+
+            // Add destination pin
+            const toLoc = locations[toId];
+            if (toPin) map.removeLayer(toPin);
+            toPin = L.marker(toLoc.coords, { icon: greenIcon }).addTo(map);
+
+            // Find route
+            const possibleRoutes = findPossibleRoutes(actualFromId, toId, includeWalking);
+            
+            if (possibleRoutes.length > 0) {
+                currentRoute = possibleRoutes[0];
+                displayRoute(currentRoute);
+                
+                // Draw on map
+                if (includeWalking && userLocation) {
+                    drawWalkingRoute(userLocation, locations[actualFromId].coords);
+                }
+                drawBusRoute(currentRoute);
+                
+                // Update header
+                document.getElementById('route-title').textContent = `${currentRoute.duration} min`;
+                document.getElementById('route-subtitle').textContent = currentRoute.type === 'direct' ? 'Direct' : 'Transfer required';
+            }
+        }
+
+        // Get next bus times
+        function getNextBusTimes(route, fromStop, toStop, walkingBuffer = 0) {
             const now = new Date();
-            const currentMinutes = now.getHours() * 60 + now.getMinutes() + 3;
+            const currentMinutes = now.getHours() * 60 + now.getMinutes() + 3 + walkingBuffer;
             
             const buses = [];
             const [startHour, startMin] = route.firstBus.split(':').map(Number);
@@ -1026,49 +867,103 @@
             return buses;
         }
 
-        function findRoute() {
-            const fromId = document.getElementById('from-select').value;
-            const toId = document.getElementById('to-select').value;
-            
-            if (!fromId || !toId) {
-                alert('Please select both starting point and destination');
-                return;
-            }
+        // Find possible routes
+        function findPossibleRoutes(from, to, includeWalking = false) {
+            const possibleRoutes = [];
+            const walkingBuffer = includeWalking && userLocation ? userLocation.walkTime : 0;
 
-            if (fromId === toId) {
-                showRouteResults([{ type: 'same', message: "You're already at your destination" }]);
-                return;
-            }
-
-            // Remove existing routes
-            if (routeControl) {
-                map.removeControl(routeControl);
-            }
-            if (walkingRouteControl) {
-                map.removeControl(walkingRouteControl);
-            }
-
-            // Handle current location as starting point
-            let actualFromId = fromId;
-            let includeWalking = false;
-            
-            if (fromId === 'current-location' && userLocation) {
-                actualFromId = userLocation.nearestStop.id;
-                includeWalking = true;
-            }
-
-            const possibleRoutes = findPossibleRoutes(actualFromId, toId, includeWalking);
-            showRouteResults(possibleRoutes);
-
-            // Draw routes on map
-            if (possibleRoutes.length > 0 && possibleRoutes[0].steps) {
-                if (includeWalking && userLocation) {
-                    drawWalkingRoute(userLocation, locations[actualFromId].coords);
+            for (const [routeNum, route] of Object.entries(routes)) {
+                if (route.stops.includes(from) && route.stops.includes(to)) {
+                    const fromIndex = route.stops.indexOf(from);
+                    const toIndex = route.stops.indexOf(to);
+                    
+                    if (fromIndex < toIndex) {
+                        const duration = (toIndex - fromIndex) * 5 + 10;
+                        const buses = getNextBusTimes(route, from, to, walkingBuffer);
+                        const nextBus = buses.find(b => !b.isMissed);
+                        
+                        possibleRoutes.push({
+                            type: 'direct',
+                            duration: duration + walkingBuffer,
+                            nextBus: nextBus,
+                            buses: buses.slice(0, 5),
+                            includeWalking: includeWalking,
+                            walkTime: walkingBuffer,
+                            steps: [{
+                                route: routeNum,
+                                from: from,
+                                to: to,
+                                name: route.name,
+                                color: route.color,
+                                description: `Route ${routeNum}`,
+                                departureTime: nextBus ? nextBus.time : null
+                            }]
+                        });
+                    }
                 }
-                drawStreetRoute(possibleRoutes[0]);
             }
+
+            return possibleRoutes;
         }
 
+        // Display route details
+        function displayRoute(route) {
+            const summaryEl = document.getElementById('route-details-summary');
+            const contentEl = document.getElementById('route-details-content');
+            
+            // Summary
+            summaryEl.innerHTML = `
+                <div class="bus-time-header">
+                    <div>
+                        <div class="next-bus">${route.nextBus ? route.nextBus.time : 'No buses'}</div>
+                        <div class="duration">Next departure</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 20px; font-weight: 600;">${route.duration} min</div>
+                        <div class="duration">Total journey</div>
+                    </div>
+                </div>
+            `;
+            
+            // Details
+            let html = '';
+            
+            if (route.includeWalking && userLocation) {
+                html += `
+                    <div class="route-step">
+                        <div class="step-icon walk">🚶</div>
+                        <div class="step-info">
+                            <div class="step-name">Walk to ${userLocation.nearestStop.name}</div>
+                            <div class="step-detail">${route.walkTime} min • ${userLocation.nearestStop.distance.toFixed(2)} mi</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            route.steps.forEach((step, index) => {
+                html += `
+                    <div class="route-step">
+                        <div class="step-icon" style="background: ${step.color}">${index + 1}</div>
+                        <div class="step-info">
+                            <div class="step-name">Bus #${step.route} - ${step.name}</div>
+                            <div class="step-detail">${locations[step.from].name} → ${locations[step.to].name}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            if (route.buses && route.buses.length > 0) {
+                html += '<div class="bus-times">';
+                route.buses.forEach(bus => {
+                    html += `<div class="bus-time ${bus.isNext ? 'next' : ''}">${bus.time}</div>`;
+                });
+                html += '</div>';
+            }
+            
+            contentEl.innerHTML = html;
+        }
+
+        // Draw walking route
         function drawWalkingRoute(from, to) {
             walkingRouteControl = L.Routing.control({
                 waypoints: [
@@ -1089,7 +984,8 @@
             }).addTo(map);
         }
 
-        function drawStreetRoute(route) {
+        // Draw bus route
+        function drawBusRoute(route) {
             const waypoints = [];
             
             waypoints.push(L.latLng(locations[route.steps[0].from].coords));
@@ -1112,346 +1008,30 @@
                     styles: [{
                         color: '#007AFF',
                         weight: 5,
-                        opacity: 0.8,
-                        dashArray: '10, 10'
+                        opacity: 0.8
                     }]
                 }
             }).addTo(map);
-        }
 
-        function findPossibleRoutes(from, to) {
-            const possibleRoutes = [];
-            const now = new Date();
-
-            // Check direct routes
-            for (const [routeNum, route] of Object.entries(routes)) {
-                if (route.stops.includes(from) && route.stops.includes(to)) {
-                    const fromIndex = route.stops.indexOf(from);
-                    const toIndex = route.stops.indexOf(to);
-                    
-                    if (fromIndex < toIndex) {
-                        const duration = (toIndex - fromIndex) * 5 + 10;
-                        const buses = getNextBusTimes(route, from, to);
-                        const nextBus = buses.find(b => !b.isMissed);
-                        
-                        possibleRoutes.push({
-                            type: 'direct',
-                            duration: duration,
-                            nextBus: nextBus,
-                            buses: buses.slice(0, 5),
-                            steps: [{
-                                route: routeNum,
-                                from: from,
-                                to: to,
-                                name: route.name,
-                                color: route.color,
-                                description: `Route ${routeNum}`,
-                                departureTime: nextBus ? nextBus.time : null
-                            }]
-                        });
-                    }
-                }
-            }
-
-            // Add transfer options if no direct route
-            if (possibleRoutes.length === 0) {
-                // West Tisbury transfers
-                if ((from.startsWith('edg') || from === 'airport') && (to.startsWith('ch') || to === 'aq-cliffs')) {
-                    const route1 = routes['6'];
-                    const route2 = routes[to.startsWith('ch') ? '4' : '5'];
-                    const buses1 = getNextBusTimes(route1, from, 'wt-townhall');
-                    const nextBus1 = buses1.find(b => !b.isMissed);
-                    
-                    possibleRoutes.push({
-                        type: 'transfer',
-                        duration: 60,
-                        nextBus: nextBus1,
-                        buses: buses1.slice(0, 3),
-                        steps: [
-                            {
-                                route: '6',
-                                from: from,
-                                to: 'wt-townhall',
-                                name: 'Route 6',
-                                color: routes['6'].color,
-                                description: 'To West Tisbury Town Hall',
-                                departureTime: nextBus1 ? nextBus1.time : null
-                            },
-                            {
-                                route: to.startsWith('ch') ? '4' : '5',
-                                from: 'wt-townhall',
-                                to: to,
-                                name: `Route ${to.startsWith('ch') ? '4' : '5'}`,
-                                color: routes[to.startsWith('ch') ? '4' : '5'].color,
-                                description: `To ${locations[to].name}`,
-                                transfer: true,
-                                departureTime: nextBus1 ? addMinutes(nextBus1.time, 30) : null
-                            }
-                        ]
-                    });
-                }
-            }
-
-            return possibleRoutes;
-        }
-
-        function addMinutes(timeStr, minutes) {
-            const [time, ampm] = timeStr.split(' ');
-            const [hour, min] = time.split(':').map(Number);
-            let hour24 = hour;
-            if (ampm === 'PM' && hour !== 12) hour24 += 12;
-            if (ampm === 'AM' && hour === 12) hour24 = 0;
-            
-            const totalMin = hour24 * 60 + min + minutes;
-            const newHour24 = Math.floor(totalMin / 60);
-            const newMin = totalMin % 60;
-            const newHour = newHour24 % 12 || 12;
-            const newAmpm = newHour24 >= 12 ? 'PM' : 'AM';
-            
-            return `${newHour}:${newMin.toString().padStart(2, '0')} ${newAmpm}`;
-        }
-
-        function showRouteResults(routes) {
-            const sheet = document.getElementById('bottom-sheet');
-            const content = document.getElementById('sheet-content');
-            const sheetTitle = document.getElementById('sheet-title');
-
-            if (routes.length === 0) {
-                content.innerHTML = `
-                    <div class="no-route">
-                        No route found. Try different locations or contact VTA at 508-693-9440 for assistance.
-                    </div>
-                `;
-                sheetTitle.textContent = 'No routes available';
-            } else if (routes[0].type === 'same') {
-                content.innerHTML = `
-                    <div class="route-card">
-                        <p style="text-align: center; padding: 20px; font-size: 17px;">
-                            ${routes[0].message}
-                        </p>
-                    </div>
-                `;
-                sheetTitle.textContent = 'Already at destination';
-            } else {
-                // Update sheet title with route info
-                const route = routes[0];
-                sheetTitle.textContent = `${route.duration} min • Next bus ${route.nextBus ? route.nextBus.time : 'N/A'}`;
-                
-                let html = '<div class="free-badge">FREE BUS SERVICE</div>';
-                
-                routes.forEach((route, index) => {
-                    html += `
-                        <div class="route-card">
-                            <div class="route-header">
-                                <div>
-                                    <div class="route-title">
-                                        ${route.type === 'direct' ? 'Direct' : 'Transfer Required'}
-                                    </div>
-                                    <div class="route-subtitle">${route.duration} min • ${route.steps.length} ${route.steps.length > 1 ? 'buses' : 'bus'}</div>
-                                </div>
-                                <div class="route-time">
-                                    ${route.nextBus ? `<div class="next-bus">${route.nextBus.time}</div>` : ''}
-                                    <div class="duration">Next bus</div>
-                                </div>
-                            </div>
-                    `;
-
-                    // Show upcoming buses
-                    if (route.buses && route.buses.length > 0) {
-                        html += `
-                            <div class="schedule-info">
-                                <h4>Departures</h4>
-                                <div class="bus-times">
-                        `;
-                        route.buses.forEach(bus => {
-                            html += `<div class="bus-time ${bus.isNext ? 'next' : ''} ${bus.isMissed ? 'missed' : ''}">${bus.time}</div>`;
-                        });
-                        html += `
-                                </div>
-                            </div>
-                        `;
-                    }
-
-                    // Add walking step if from current location
-                    if (route.includeWalking && userLocation) {
-                        html += `
-                            <div class="route-step">
-                                <div class="step-line"></div>
-                                <div class="step-icon walk">🚶</div>
-                                <div class="step-info">
-                                    <div class="step-name">Walk to ${userLocation.nearestStop.name}</div>
-                                    <div class="step-detail">${(userLocation.nearestStop.distance).toFixed(2)} miles</div>
-                                    <div class="step-time">${route.walkTime} min walk</div>
-                                </div>
-                            </div>
-                        `;
-                    }
-
-                    route.steps.forEach((step, stepIndex) => {
-                        const isLast = stepIndex === route.steps.length - 1;
-                        html += `
-                            <div class="route-step">
-                                ${!isLast ? '<div class="step-line"></div>' : ''}
-                                <div class="step-icon ${step.transfer ? 'transfer' : ''}" style="background: ${step.color}">
-                                    ${step.transfer ? '🔄' : stepIndex + 1}
-                                </div>
-                                <div class="step-info">
-                                    <div class="step-name">
-                                        ${step.name}
-                                        <span class="route-line-indicator">
-                                            <svg class="transit-icon" fill="white" viewBox="0 0 24 24">
-                                                <path d="M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h2l2-2h4l2 2h2v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-4-4-8-4zM7.5 17c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm3.5-7H6V6h5v4zm2 0V6h5v4h-5zm3.5 7c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
-                                            </svg>
-                                            ${step.route}
-                                        </span>
-                                    </div>
-                                    <div class="step-detail">${step.description}</div>
-                                    ${step.departureTime ? `<div class="step-time">Board at ${step.departureTime}</div>` : ''}
-                                </div>
-                            </div>
-                        `;
-                    });
-
-                    // Add final walk step
-                    html += `
-                        <div class="route-step">
-                            <div class="step-icon destination">✓</div>
-                            <div class="step-info">
-                                <div class="step-name">${locations[routes[0].steps[routes[0].steps.length - 1].to].name}</div>
-                                <div class="step-detail">Destination</div>
-                            </div>
-                        </div>
-                    `;
-
-                    html += '</div>';
-                });
-
-                content.innerHTML = html;
-            }
-
-            sheet.classList.remove('minimized', 'expanded');
-            sheet.classList.add('active');
-            
-            // Adjust map to show route above sheet and Safari bottom bar
+            // Fit bounds
             setTimeout(() => {
-                if (fromPin && toPin) {
-                    const bounds = L.latentBounds([
-                        fromPin.getLatLng(),
-                        toPin.getLatLng()
-                    ]);
-                    
-                    // Calculate padding to avoid Safari UI
-                    const topPadding = document.querySelector('.top-bar').offsetHeight + 20;
-                    const bottomPadding = window.innerHeight * 0.5 + 100; // Extra padding for Safari bar
-                    
-                    map.fitBounds(bounds, { 
-                        paddingTopLeft: [20, topPadding],
-                        paddingBottomRight: [20, bottomPadding]
-                    });
-                }
-            }, 350);
+                const bounds = [];
+                if (userLocationMarker) bounds.push(userLocationMarker.getLatLng());
+                waypoints.forEach(wp => bounds.push(wp));
+                
+                map.fitBounds(bounds, { 
+                    paddingTopLeft: [20, 80],
+                    paddingBottomRight: [20, 200]
+                });
+            }, 500);
         }
 
-        // Sheet interaction handlers
-        function toggleSheet() {
-            const sheet = document.getElementById('bottom-sheet');
-            if (sheet.classList.contains('minimized')) {
-                sheet.classList.remove('minimized');
-                sheet.classList.add('active');
-            } else if (sheet.classList.contains('active')) {
-                sheet.classList.remove('active');
-                sheet.classList.add('expanded');
-            } else if (sheet.classList.contains('expanded')) {
-                sheet.classList.remove('expanded');
-                sheet.classList.add('active');
-            }
+        // Toggle details panel
+        function toggleDetails() {
+            const details = document.querySelector('.route-details');
+            const isExpanded = details.style.transform === 'translateY(-200px)';
+            details.style.transform = isExpanded ? '' : 'translateY(-200px)';
         }
-
-        // Handle sheet dragging with better Safari support
-        let sheetStartY = 0;
-        let sheetCurrentY = 0;
-        let isDragging = false;
-        let startHeight = 0;
-
-        const sheet = document.getElementById('bottom-sheet');
-        const sheetHeader = sheet.querySelector('.sheet-header');
-
-        // Use touch events for better Safari compatibility
-        sheetHeader.addEventListener('touchstart', (e) => {
-            isDragging = true;
-            sheetStartY = e.touches[0].clientY;
-            startHeight = sheet.getBoundingClientRect().height;
-            sheet.style.transition = 'none';
-            e.preventDefault();
-        }, { passive: false });
-
-        sheetHeader.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            e.preventDefault();
-            
-            sheetCurrentY = e.touches[0].clientY;
-            const deltaY = sheetCurrentY - sheetStartY;
-            
-            // Calculate new position
-            const windowHeight = window.innerHeight;
-            const currentTransform = windowHeight - startHeight + deltaY;
-            
-            // Limit the drag range
-            const minTransform = windowHeight * 0.1; // 90% visible
-            const maxTransform = windowHeight - 60; // Only handle visible
-            
-            const clampedTransform = Math.max(minTransform, Math.min(maxTransform, currentTransform));
-            
-            sheet.style.transform = `translateY(${clampedTransform}px)`;
-            sheet.style.webkitTransform = `translateY(${clampedTransform}px)`;
-        }, { passive: false });
-
-        sheetHeader.addEventListener('touchend', (e) => {
-            if (!isDragging) return;
-            isDragging = false;
-            sheet.style.transition = '';
-            
-            const deltaY = sheetCurrentY - sheetStartY;
-            const threshold = 50;
-            
-            // Determine final position based on drag direction
-            sheet.classList.remove('minimized', 'active', 'expanded');
-            
-            if (deltaY > threshold) {
-                // Dragged down
-                if (sheet.classList.contains('expanded') || startHeight > window.innerHeight * 0.6) {
-                    sheet.classList.add('active');
-                } else {
-                    sheet.classList.add('minimized');
-                }
-            } else if (deltaY < -threshold) {
-                // Dragged up
-                if (sheet.classList.contains('minimized') || startHeight < window.innerHeight * 0.3) {
-                    sheet.classList.add('active');
-                } else {
-                    sheet.classList.add('expanded');
-                }
-            } else {
-                // Return to previous state
-                if (startHeight > window.innerHeight * 0.7) {
-                    sheet.classList.add('expanded');
-                } else if (startHeight > window.innerHeight * 0.3) {
-                    sheet.classList.add('active');
-                } else {
-                    sheet.classList.add('minimized');
-                }
-            }
-            
-            sheet.style.transform = '';
-            sheet.style.webkitTransform = '';
-            e.preventDefault();
-        }, { passive: false });
-
-        // Prevent body scrolling on iOS
-        document.body.addEventListener('touchmove', (e) => {
-            if (e.target.closest('.sheet-content')) return;
-            e.preventDefault();
-        }, { passive: false });
     </script>
 </body>
 </html>
