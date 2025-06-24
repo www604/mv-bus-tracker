@@ -26,6 +26,8 @@
             width: 100vw;
             overflow: hidden;
             position: fixed;
+            -webkit-text-size-adjust: 100%;
+            -webkit-font-smoothing: antialiased;
         }
 
         .app-container {
@@ -211,18 +213,40 @@
             right: 0;
             background: #ffffff;
             border-radius: 12px 12px 0 0;
-            transform: translateY(100%);
+            transform: translateY(calc(100% - 60px));
             transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
             z-index: 1000;
-            max-height: 75vh;
+            height: 85vh;
             display: flex;
             flex-direction: column;
             padding-bottom: env(safe-area-inset-bottom);
             box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.15);
+            -webkit-transform: translateY(calc(100% - 60px));
+            -webkit-transition: -webkit-transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        .bottom-sheet.minimized {
+            transform: translateY(calc(100% - 60px));
+            -webkit-transform: translateY(calc(100% - 60px));
         }
 
         .bottom-sheet.active {
-            transform: translateY(0);
+            transform: translateY(35vh);
+            -webkit-transform: translateY(35vh);
+        }
+
+        .bottom-sheet.expanded {
+            transform: translateY(10vh);
+            -webkit-transform: translateY(10vh);
+        }
+
+        .sheet-header {
+            padding: 8px 20px 16px;
+            border-bottom: 1px solid #e5e5ea;
+            background: #f9f9f9;
+            border-radius: 12px 12px 0 0;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .sheet-handle {
@@ -230,7 +254,15 @@
             height: 5px;
             background: #c7c7cc;
             border-radius: 2.5px;
-            margin: 8px auto;
+            margin: 0 auto 8px;
+        }
+
+        .sheet-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #8e8e93;
+            text-align: center;
+            letter-spacing: -0.2px;
         }
 
         .sheet-content {
@@ -238,6 +270,7 @@
             overflow-y: auto;
             flex: 1;
             -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
         }
 
         .route-card {
@@ -586,19 +619,26 @@
             </div>
         </div>
 
-        <div class="bottom-sheet" id="bottom-sheet">
-            <div class="sheet-handle"></div>
+        <div class="bottom-sheet minimized" id="bottom-sheet">
+            <div class="sheet-header" onclick="toggleSheet()">
+                <div class="sheet-handle"></div>
+                <div class="sheet-title" id="sheet-title">Tap to plan your route</div>
+            </div>
             <div class="sheet-content" id="sheet-content">
             </div>
         </div>
     </div>
 
     <script>
-        // Initialize map with light theme
+        // Initialize map with Safari optimizations
         const map = L.map('map', {
             center: [41.4, -70.6],
             zoom: 11,
-            zoomControl: false
+            zoomControl: false,
+            tap: false, // Fixes Safari touch issues
+            touchZoom: true,
+            dragging: true,
+            doubleClickZoom: true
         });
 
         // Light map theme - using CartoDB Positron which doesn't require API key
@@ -1145,6 +1185,7 @@
         function showRouteResults(routes) {
             const sheet = document.getElementById('bottom-sheet');
             const content = document.getElementById('sheet-content');
+            const sheetTitle = document.getElementById('sheet-title');
 
             if (routes.length === 0) {
                 content.innerHTML = `
@@ -1152,6 +1193,7 @@
                         No route found. Try different locations or contact VTA at 508-693-9440 for assistance.
                     </div>
                 `;
+                sheetTitle.textContent = 'No routes available';
             } else if (routes[0].type === 'same') {
                 content.innerHTML = `
                     <div class="route-card">
@@ -1160,7 +1202,12 @@
                         </p>
                     </div>
                 `;
+                sheetTitle.textContent = 'Already at destination';
             } else {
+                // Update sheet title with route info
+                const route = routes[0];
+                sheetTitle.textContent = `${route.duration} min • Next bus ${route.nextBus ? route.nextBus.time : 'N/A'}`;
+                
                 let html = '<div class="free-badge">FREE BUS SERVICE</div>';
                 
                 routes.forEach((route, index) => {
@@ -1253,40 +1300,125 @@
                 content.innerHTML = html;
             }
 
+            sheet.classList.remove('minimized', 'expanded');
             sheet.classList.add('active');
+            
+            // Adjust map to show route above sheet
+            setTimeout(() => {
+                if (fromPin && toPin) {
+                    const bounds = L.latentBounds([
+                        fromPin.getLatLng(),
+                        toPin.getLatLng()
+                    ]);
+                    // Adjust padding to account for bottom sheet
+                    map.fitBounds(bounds, { 
+                        paddingTopLeft: [20, 20],
+                        paddingBottomRight: [20, window.innerHeight * 0.65]
+                    });
+                }
+            }, 350);
         }
 
-        // Handle sheet dragging
-        let sheetY = 0;
-        let startY = 0;
-        let currentY = 0;
-        let dragging = false;
+        // Sheet interaction handlers
+        function toggleSheet() {
+            const sheet = document.getElementById('bottom-sheet');
+            if (sheet.classList.contains('minimized')) {
+                sheet.classList.remove('minimized');
+                sheet.classList.add('active');
+            } else if (sheet.classList.contains('active')) {
+                sheet.classList.remove('active');
+                sheet.classList.add('expanded');
+            } else if (sheet.classList.contains('expanded')) {
+                sheet.classList.remove('expanded');
+                sheet.classList.add('active');
+            }
+        }
+
+        // Handle sheet dragging with better Safari support
+        let sheetStartY = 0;
+        let sheetCurrentY = 0;
+        let isDragging = false;
+        let startHeight = 0;
 
         const sheet = document.getElementById('bottom-sheet');
-        const handle = sheet.querySelector('.sheet-handle');
+        const sheetHeader = sheet.querySelector('.sheet-header');
 
-        handle.addEventListener('touchstart', (e) => {
-            startY = e.touches[0].pageY;
-            dragging = true;
-        });
+        // Use touch events for better Safari compatibility
+        sheetHeader.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            sheetStartY = e.touches[0].clientY;
+            startHeight = sheet.getBoundingClientRect().height;
+            sheet.style.transition = 'none';
+            e.preventDefault();
+        }, { passive: false });
 
-        handle.addEventListener('touchmove', (e) => {
-            if (!dragging) return;
-            currentY = e.touches[0].pageY;
-            const deltaY = currentY - startY;
-            if (deltaY > 0) {
-                sheet.style.transform = `translateY(${deltaY}px)`;
+        sheetHeader.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            
+            sheetCurrentY = e.touches[0].clientY;
+            const deltaY = sheetCurrentY - sheetStartY;
+            
+            // Calculate new position
+            const windowHeight = window.innerHeight;
+            const currentTransform = windowHeight - startHeight + deltaY;
+            
+            // Limit the drag range
+            const minTransform = windowHeight * 0.1; // 90% visible
+            const maxTransform = windowHeight - 60; // Only handle visible
+            
+            const clampedTransform = Math.max(minTransform, Math.min(maxTransform, currentTransform));
+            
+            sheet.style.transform = `translateY(${clampedTransform}px)`;
+            sheet.style.webkitTransform = `translateY(${clampedTransform}px)`;
+        }, { passive: false });
+
+        sheetHeader.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            sheet.style.transition = '';
+            
+            const deltaY = sheetCurrentY - sheetStartY;
+            const threshold = 50;
+            
+            // Determine final position based on drag direction
+            sheet.classList.remove('minimized', 'active', 'expanded');
+            
+            if (deltaY > threshold) {
+                // Dragged down
+                if (sheet.classList.contains('expanded') || startHeight > window.innerHeight * 0.6) {
+                    sheet.classList.add('active');
+                } else {
+                    sheet.classList.add('minimized');
+                }
+            } else if (deltaY < -threshold) {
+                // Dragged up
+                if (sheet.classList.contains('minimized') || startHeight < window.innerHeight * 0.3) {
+                    sheet.classList.add('active');
+                } else {
+                    sheet.classList.add('expanded');
+                }
+            } else {
+                // Return to previous state
+                if (startHeight > window.innerHeight * 0.7) {
+                    sheet.classList.add('expanded');
+                } else if (startHeight > window.innerHeight * 0.3) {
+                    sheet.classList.add('active');
+                } else {
+                    sheet.classList.add('minimized');
+                }
             }
-        });
-
-        handle.addEventListener('touchend', () => {
-            dragging = false;
-            const deltaY = currentY - startY;
-            if (deltaY > 100) {
-                sheet.classList.remove('active');
-            }
+            
             sheet.style.transform = '';
-        });
+            sheet.style.webkitTransform = '';
+            e.preventDefault();
+        }, { passive: false });
+
+        // Prevent body scrolling on iOS
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.target.closest('.sheet-content')) return;
+            e.preventDefault();
+        }, { passive: false });
     </script>
 </body>
 </html>
