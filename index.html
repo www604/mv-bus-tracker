@@ -975,11 +975,19 @@
             // Clear existing route
             if (routeControl) {
                 map.removeControl(routeControl);
+                routeControl = null;
             }
 
             // Clear existing pins
             if (fromPin) map.removeLayer(fromPin);
             if (toPin) map.removeLayer(toPin);
+
+            // Clear any existing polylines
+            map.eachLayer((layer) => {
+                if (layer instanceof L.Polyline && !(layer instanceof L.Routing.Line)) {
+                    map.removeLayer(layer);
+                }
+            });
 
             const route = currentRoute.routes[0];
             const waypoints = [];
@@ -989,82 +997,63 @@
                 waypoints.push(L.latLng(userLocation.lat, userLocation.lng));
             }
 
-            // Add from pin
+            // Add from location
             const fromCoords = currentRoute.from === 'current-location' ? 
                 [userLocation.nearestStop.coords[0], userLocation.nearestStop.coords[1]] : 
                 locations[currentRoute.from].coords;
             
-            fromPin = L.marker(fromCoords, { icon: redIcon }).addTo(map);
-
-            // Add route waypoints
             waypoints.push(L.latLng(fromCoords));
-            
+
+            // Add all intermediate stops for accurate street routing
             route.steps.forEach(step => {
-                if (step.transfer) {
-                    waypoints.push(L.latLng(locations[step.from].coords));
-                }
-            });
-            
-            const lastStep = route.steps[route.steps.length - 1];
-            waypoints.push(L.latLng(locations[lastStep.to].coords));
-
-            // Add to pin
-            toPin = L.marker(locations[currentRoute.to].coords, { icon: greenIcon }).addTo(map);
-
-            // Draw route line on map
-            const routeColor = route.steps[0].color || '#007AFF';
-            
-            // If walking is included, draw walking route first
-            if (currentRoute.includeWalking && userLocation) {
-                L.polyline([
-                    [userLocation.lat, userLocation.lng],
-                    fromCoords
-                ], {
-                    color: '#007AFF',
-                    weight: 4,
-                    opacity: 0.6,
-                    dashArray: '5, 10'
-                }).addTo(map);
-            }
-
-            // Draw bus route
-            const busWaypoints = [];
-            busWaypoints.push(fromCoords);
-            
-            route.steps.forEach(step => {
-                const fromLoc = locations[step.from].coords;
-                const toLoc = locations[step.to].coords;
-                
-                // Get all intermediate stops for this route segment
                 const routeData = routes[step.route];
                 if (routeData) {
                     const fromIndex = routeData.stops.indexOf(step.from);
                     const toIndex = routeData.stops.indexOf(step.to);
                     
-                    for (let i = fromIndex; i <= toIndex; i++) {
+                    // Add intermediate stops to ensure route follows actual bus path
+                    for (let i = fromIndex + 1; i <= toIndex; i++) {
                         if (locations[routeData.stops[i]]) {
-                            busWaypoints.push(locations[routeData.stops[i]].coords);
+                            waypoints.push(L.latLng(locations[routeData.stops[i]].coords));
                         }
                     }
                 } else {
-                    busWaypoints.push(toLoc);
+                    waypoints.push(L.latLng(locations[step.to].coords));
+                }
+                
+                // Add transfer points
+                if (step.transfer && step !== route.steps[route.steps.length - 1]) {
+                    waypoints.push(L.latLng(locations[step.to].coords));
                 }
             });
 
-            // Draw the bus route line
-            L.polyline(busWaypoints, {
-                color: routeColor,
-                weight: 5,
-                opacity: 0.8
+            // Add pins
+            fromPin = L.marker(fromCoords, { icon: redIcon }).addTo(map);
+            toPin = L.marker(locations[currentRoute.to].coords, { icon: greenIcon }).addTo(map);
+
+            // Use Leaflet Routing Machine to draw street-following route
+            routeControl = L.Routing.control({
+                waypoints: waypoints,
+                routeWhileDragging: false,
+                addWaypoints: false,
+                createMarker: function() { return null; }, // Don't create markers, we have our own
+                lineOptions: {
+                    styles: [{
+                        color: route.steps[0].color || '#007AFF',
+                        weight: 5,
+                        opacity: 0.8
+                    }]
+                },
+                router: L.Routing.osrmv1({
+                    serviceUrl: 'https://router.project-osrm.org/route/v1',
+                    profile: 'driving', // Use driving profile for bus routes
+                    geometries: 'geojson'
+                })
             }).addTo(map);
 
             // Fit bounds with extra padding for UI
             setTimeout(() => {
-                const allPoints = currentRoute.includeWalking && userLocation ? 
-                    [[userLocation.lat, userLocation.lng], ...busWaypoints] : 
-                    busWaypoints;
-                    
-                const bounds = L.latentBounds(allPoints);
+                const bounds = L.latentBounds(waypoints);
                 map.fitBounds(bounds, { 
                     paddingTopLeft: [20, 120],
                     paddingBottomRight: [20, 280]
